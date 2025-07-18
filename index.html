@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Chat Memories</title>
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Main container - split layout */
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 1400px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Left side - Phone display container */
+        .phone-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            padding: 40px;
+        }
+
+        /* Phone frame styling */
+        .phone-frame {
+            width: 320px;
+            height: 640px;
+            background: #1a1a1a;
+            border-radius: 35px;
+            padding: 8px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        /* Phone screen */
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 27px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Phone notch */
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 25px;
+            background: #1a1a1a;
+            border-radius: 0 0 15px 15px;
+            z-index: 10;
+        }
+
+        /* Chat interface inside phone */
+        .chat-section {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: #f0f0f0;
+        }
+
+        /* WhatsApp-style header */
+        .chat-header {
+            background: #075e54;
+            color: white;
+            padding: 25px 20px 15px 20px; /* Extra top padding for notch */
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #25d366, #128c7e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .contact-info h3 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .contact-info p {
+            margin: 0;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Chat messages area */
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e5ddd5' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        /* Individual message bubbles */
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .message.sent {
+            justify-content: flex-end;
+        }
+
+        .message.received {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .message.sent .message-bubble {
+            background: #dcf8c6;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.received .message-bubble {
+            background: white;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .message.received .message-time {
+            text-align: left;
+        }
+
+        /* Right side - Photo memories */
+        .photos-section {
+            flex: 1;
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .photos-header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .photos-header h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .photos-header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        /* Photo gallery grid */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+            flex: 1;
+            align-content: start;
+        }
+
+        .photo-item {
+            aspect-ratio: 1;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0;
+            transform: translateY(30px) scale(0.8);
+        }
+
+        .photo-item.animate-in {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .photo-item:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Placeholder for photos (colored rectangles) */
+        .photo-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Floating particles animation */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        /* Debug status styles */
+        .debug-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .phone-container {
+                padding: 20px;
+            }
+            
+            .phone-frame {
+                width: 280px;
+                height: 560px;
+            }
+            
+            .photos-section {
+                flex: none;
+                height: 50vh;
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+
+        /* Animation keyframes */
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInPhoto {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            opacity: 0;
+        }
+
+        .typing-indicator.active {
+            opacity: 1;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            animation: typingDot 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typingDot {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Debug Status Display -->
+    <div class="debug-status" id="debugStatus">
+        <strong>Debug Info:</strong><br>
+        Status: Initializing...
+    </div>
+
+    <div class="container">
+        <!-- Left Side: Phone Display -->
+        <div class="phone-container">
+            <div class="phone-frame">
+                <div class="phone-notch"></div>
+                <div class="phone-screen">
+                    <div class="chat-section">
+                        <!-- WhatsApp-style header -->
+                        <div class="chat-header">
+                            <div class="contact-avatar">❤️</div>
+                            <div class="contact-info">
+                                <h3>My Special Day</h3>
+                                <p>Today • Tap to view memories</p>
+                            </div>
+                        </div>
+
+                        <!-- Chat messages container -->
+                        <div class="chat-messages" id="chatMessages">
+                            <!-- Messages will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Photo Memories -->
+        <div class="photos-section">
+            <!-- Floating particles for ambiance -->
+            <div class="particle" style="top: 10%; left: 20%; animation-delay: 0s;"></div>
+            <div class="particle" style="top: 30%; right: 15%; animation-delay: 2s;"></div>
+            <div class="particle" style="bottom: 40%; left: 10%; animation-delay: 4s;"></div>
+            <div class="particle" style="bottom: 20%; right: 25%; animation-delay: 1s;"></div>
+
+            <div class="photos-header">
+                <h2>✨ Photo Memories</h2>
+                <p>Moments that made this day special</p>
+            </div>
+
+            <!-- Photo grid -->
+            <div class="photo-grid" id="photoGrid">
+                <!-- Photos will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Set your name and chat file path
+        const MY_NAME = 'Dhruba'; // Replace with your actual name from the chat
+        const CHAT_FILE_PATH = 'chat.txt'; // Path to your chat file
+        
+        // Global variable to store parsed chat data
+        let chatData = [];
+
+        // Debug logging function
+        function updateDebugStatus(message) {
+            const debugDiv = document.getElementById('debugStatus');
+            const timestamp = new Date().toLocaleTimeString();
+            debugDiv.innerHTML = `<strong>Debug Info:</strong><br>
+                [${timestamp}] ${message}`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // Function to load and parse chat file
+        async function loadChatFile() {
+            try {
+                updateDebugStatus('Attempting to load chat.txt...');
+                
+                // Try to read the file using fetch
+                const response = await fetch(CHAT_FILE_PATH);
+                
+                updateDebugStatus(`Fetch response status: ${response.status}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                updateDebugStatus(`File loaded successfully! Size: ${text.length} characters`);
+                
+                const parsedData = parseChatText(text);
+                updateDebugStatus(`Parsed ${parsedData.length} messages from chat file`);
+                
+                return parsedData;
+            } catch (error) {
+                updateDebugStatus(`Error loading chat file: ${error.message}`);
+                console.error('Detailed error:', error);
+                return null;
+            }
+        }
+
+        // Function to parse WhatsApp chat text
+        function parseChatText(text) {
+            updateDebugStatus('Parsing chat text...');
+            
+            const lines = text.split('\n');
+            const parsedMessages = [];
+            let currentMessage = null;
+            
+            // Regex pattern to match: [date, time, am/pm] name: message
+            const messagePattern = /^\[(\d{1,2}\/\d{1,2}\/\d{4}),\s*(\d{1,2}:\d{2})\s*(AM|PM)\]\s*([^:]+):\s*(.*)$/i;
+            
+            let lineCount = 0;
+            let matchedLines = 0;
+            
+            lines.forEach(line => {
+                lineCount++;
+                line = line.trim();
+                if (!line) return;
+                
+                const match = line.match(messagePattern);
+                if (match) {
+                    matchedLines++;
+                    
+                    // If we have a previous message, save it
+                    if (currentMessage) {
+                        parsedMessages.push(currentMessage);
+                    }
+                    
+                    // Extract components
+                    const [, date, time, ampm, sender, message] = match;
+                    
+                    // Create new message object
+                    currentMessage = {
+                        date: date,
+                        time: `${time} ${ampm.toUpperCase()}`,
+                        sender: sender.trim(),
+                        message: message.trim(),
+                        type: sender.trim() === MY_NAME ? 'sent' : 'received',
+                        timestamp: parseTimestamp(date, time, ampm)
+                    };
+                } else if (currentMessage) {
+                    // This is a continuation of the previous message (multi-line)
+                    currentMessage.message += '\n' + line;
+                }
+            });
+            
+            // Don't forget the last message
+            if (currentMessage) {
+                parsedMessages.push(currentMessage);
+            }
+            
+            updateDebugStatus(`Parsed ${lineCount} lines, matched ${matchedLines} message patterns, created ${parsedMessages.length} messages`);
+            
+            // Show first few messages for debugging
+            if (parsedMessages.length > 0) {
+                console.log('First 3 parsed messages:', parsedMessages.slice(0, 3));
+            }
+            
+            return parsedMessages;
+        }
+
+        // Function to parse timestamp for chronological ordering
+        function parseTimestamp(date, time, ampm) {
+            const [month, day, year] = date.split('/');
+            const [hours, minutes] = time.split(':');
+            let hour24 = parseInt(hours);
+            
+            // Convert to 24-hour format
+            if (ampm.toUpperCase() === 'PM' && hour24 !== 12) {
+                hour24 += 12;
+            } else if (ampm.toUpperCase() === 'AM' && hour24 === 12) {
+                hour24 = 0;
+            }
+            
+            return new Date(year, month - 1, day, hour24, parseInt(minutes));
+        }
+
+        // Function to create file input for manual file selection
+        function createFileInput() {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.txt';
+            fileInput.style.display = 'none';
+            
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    updateDebugStatus(`Manual file selected: ${file.name} (${file.size} bytes)`);
+                    
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const chatText = e.target.result;
+                        chatData = parseChatText(chatText);
+                        if (chatData && chatData.length > 0) {
+                            updateDebugStatus('Starting chat animation...');
+                            startChatAnimation();
+                        } else {
+                            updateDebugStatus('No valid chat messages found in the file.');
+                            alert('No valid chat messages found in the file.');
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            document.body.appendChild(fileInput);
+            return fileInput;
+        }
+
+        // Function to show file selection button
+        function showFileSelector() {
+            updateDebugStatus('Showing file selector...');
+            
+            const chatMessages = document.getElementById('chatMessages');
+            const fileSelector = document.createElement('div');
+            fileSelector.style.cssText = `
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                padding: 20px;
+                text-align: center;
+            `;
+            
+            fileSelector.innerHTML = `
+                <div style="margin-bottom: 20px; font-size: 18px;">📱</div>
+                <div style="margin-bottom: 15px; font-weight: bold;">Select Your Chat File</div>
+                <div style="margin-bottom: 20px; font-size: 12px; color: #666;">
+                    Choose the .txt file exported from WhatsApp<br>
+                    <small>(Looking for: ${CHAT_FILE_PATH})</small>
+                </div>
+                <button id="selectFile" style="
+                    background: #25d366;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 20px;
+                    cursor: pointer;
+                    font-size: 14px;
+                ">Choose File</button>
+            `;
+            
+            chatMessages.appendChild(fileSelector);
+            
+            // Add click handler for file selection
+            document.getElementById('selectFile').addEventListener('click', () => {
+                const fileInput = createFileInput();
+                fileInput.click();
+            });
+        }
+
+        // Sample photo data - Replace with your actual photo paths
+        const photoData = [
+            { caption: 'Morning Coffee', color: '#ff6b6b' },
+            { caption: 'Road Trip', color: '#4ecdc4' },
+            { caption: 'Mountain View', color: '#45b7d1' },
+            { caption: 'Sunset', color: '#f39c12' },
+            { caption: 'Dinner', color: '#e74c3c' },
+            { caption: 'Memories', color: '#9b59b6' },
+            { caption: 'Laughs', color: '#2ecc71' },
+            { caption: 'Together', color: '#34495e' },
+            { caption: 'Adventure', color: '#e67e22' },
+            { caption: 'Joy', color: '#16a085' },
+            { caption: 'Love', color: '#c0392b' },
+            { caption: 'Forever', color: '#8e44ad' }
+        ];
+
+        // Function to start chat animation with real timing
+        function startChatAnimation() {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = ''; // Clear file selector
+            
+            let currentIndex = 0;
+            
+            function showNextMessage() {
+                if (currentIndex >= chatData.length) {
+                    // All messages shown, start photo animation
+                    updateDebugStatus('All messages displayed, starting photo animation...');
+                    setTimeout(() => {
+                        animatePhotos();
+                    }, 1000);
+                    return;
+                }
+                
+                const message = chatData[currentIndex];
+                
+                // Show typing indicator for received messages (except first)
+                if (message.type === 'received' && currentIndex > 0) {
+                    showTypingIndicator();
+                    setTimeout(() => {
+                        const messageElement = createChatMessage(message, currentIndex);
+                        chatMessages.appendChild(messageElement);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        currentIndex++;
+                        
+                        // Calculate delay to next message based on real timing
+                        const delay = calculateMessageDelay(currentIndex);
+                        setTimeout(showNextMessage, delay);
+                    }, 1500); // Typing indicator duration
+                } else {
+                    const messageElement = createChatMessage(message, currentIndex);
+                    chatMessages.appendChild(messageElement);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    currentIndex++;
+                    
+                    // Calculate delay to next message based on real timing
+                    const delay = calculateMessageDelay(currentIndex);
+                    setTimeout(showNextMessage, delay);
+                }
+            }
+            
+            // Start showing messages
+            showNextMessage();
+        }
+
+        // Function to calculate realistic delay between messages
+        function calculateMessageDelay(nextIndex) {
+            if (nextIndex >= chatData.length) return 0;
+            
+            const currentMessage = chatData[nextIndex - 1];
+            const nextMessage = chatData[nextIndex];
+            
+            // Calculate time difference in minutes
+            const timeDiff = (nextMessage.timestamp - currentMessage.timestamp) / (1000 * 60);
+            
+            // Convert to display delay (scale down for demo)
+            // 1 minute real time = 1 second display time (adjust as needed)
+            let delay = Math.max(500, Math.min(timeDiff * 1000, 5000)); // Min 500ms, Max 5s
+            
+            return delay;
+        }
+
+        // Function to create and animate chat messages
+        function createChatMessage(data, index) {
+            const message = document.createElement('div');
+            message.className = `message ${data.type}`;
+            
+            message.innerHTML = `
+                <div class="message-bubble">
+                    <div class="message-text">${data.message}</div>
+                    <div class="message-time">${data.time}</div>
+                </div>
+            `;
+            
+            return message;
+        }
+
+        // Function to create photo items
+        function createPhotoItem(data, index) {
+            const photoItem = document.createElement('div');
+            photoItem.className = 'photo-item';
+            
+            // Create placeholder with gradient background
+            photoItem.innerHTML = `
+                <div class="photo-placeholder" style="background: linear-gradient(45deg, ${data.color}, ${adjustColorBrightness(data.color, 20)});">
+                    ${data.caption}
+                </div>
+            `;
+            
+            return photoItem;
+        }
+
+        // Function to animate photos one by one
+        function animatePhotos() {
+            const photoItems = document.querySelectorAll('.photo-item');
+            
+            photoItems.forEach((item, index) => {
+                setTimeout(() => {
+                    item.classList.add('animate-in');
+                }, index * 400); // 400ms delay between each photo
+            });
+        }
+
+        // Helper function to adjust color brightness
+        function adjustColorBrightness(hex, percent) {
+            const num = parseInt(hex.replace("#", ""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+        }
+
+        // Function to show typing indicator
+        function showTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'typing-indicator active';
+            typingIndicator.innerHTML = `
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            chatMessages.appendChild(typingIndicator);
+            
+            // Remove typing indicator after 1.5 seconds
+            setTimeout(() => {
+                typingIndicator.remove();
+            }, 1500);
+        }
+
+        // Initialize the chat showcase
+        async function initializeChatShowcase() {
+            updateDebugStatus('Initializing chat showcase...');
+            
+            const photoGrid = document.getElementById('photoGrid');
+            
+            // Populate photo grid (without animation delay)
+            photoData.forEach((data, index) => {
+                const photoElement = createPhotoItem(data, index);
+                photoGrid.appendChild(photoElement);
+            });
+            
+            updateDebugStatus('Photo grid populated, attempting to load chat file...');
+            
+            // Try to load chat file automatically
+            const loadedChatData = await loadChatFile();
+            if (loadedChatData && loadedChatData.length > 0) {
+                chatData = loadedChatData;
+                updateDebugStatus('Chat file loaded successfully, starting animation...');
+                startChatAnimation();
+            } else {
+                // Show file selector if automatic loading fails
+                updateDebugStatus('Automatic loading failed, showing file selector...');
+                showFileSelector();
+            }
+        }
+
+        // Start the animation when page loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                initializeChatShowcase();
+            }, 500);
+        });
+
+        // Add click handlers for photos (optional enhancement)
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.photo-item')) {
+                const photoItem = e.target.closest('.photo-item');
+                // Add your photo click handling logic here
+                // For example: open in lightbox, show full resolution, etc.
+                console.log('Photo clicked:', photoItem);
+            }
+        });
+
+        // Additional debugging - check if file exists
+        window.addEventListener('load', () => {
+            updateDebugStatus('Page loaded, checking environment...');
+            
+            // Test if we can access the file
+            setTimeout(async () => {
+                try {
+                    const response = await fetch(CHAT_FILE_PATH, { method: 'HEAD' });
+                    updateDebugStatus(`File check - Status: ${response.status}, File exists: ${response.ok}`);
+                } catch (error) {
+                    updateDebugStatus(`File check failed: ${error.message}`);
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
